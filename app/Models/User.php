@@ -42,4 +42,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Hubungan To-Do List
+     * Tambahkan fungsi ini supaya Auth::user()->tasks() berfungsi.
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
 }

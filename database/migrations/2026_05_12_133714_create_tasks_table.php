@@ -9,14 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
-{
-    Schema::create('tasks', function (Blueprint $table) {
-        $table->id();
-        $table->string('nama_tugasan');
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Hubungkan dengan User
+            $table->string('title'); // Nama tugasan
+            $table->boolean('is_completed')->default(false); // Status selesai/belum
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

@@ -9,6 +9,12 @@ class Task extends Model
 {
     use HasFactory;
 
-    // Benarkan Laravel menyimpan data ke dalam column ini
-    protected $fillable = ['nama_tugasan', 'user_id', 'is_done'];
+    // Gunakan 'title' supaya selari dengan kod Dashboard & Controller sebelum ini
+    protected $fillable = ['title', 'user_id', 'is_completed'];
+
+    // Hubungan balik ke User
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

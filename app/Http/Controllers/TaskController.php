@@ -2,55 +2,87 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Task; // Pastikan model Task wujud
 use Illuminate\Http\Request;
-use App\Models\Task; 
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
-    // Papar Dashboard
-    public function index() {
-        $tasks = Task::where('user_id', auth()->id())->get();
-        return view('dashboard', compact('tasks'));
+    /**
+     * Paparkan senarai tugasan di Dashboard
+     */
+    public function index()
+    {
+        // Ambil tugasan milik user yang sedang login sahaja
+        $todos = Auth::user()->tasks()->latest()->get(); 
+        
+        return view('dashboard', compact('todos'));
     }
 
-    // Tambah Tugasan
-    public function store(Request $request) {
-        $task = new Task;
-        $task->nama_tugasan = $request->task;
-        $task->user_id = auth()->id(); 
-        $task->save();
-        return redirect('/dashboard');
+    /**
+     * Simpan tugasan baru
+     */
+    public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required|max:255', // Mesti sepadan dengan $fillable
+    ]);
+
+    auth()->user()->tasks()->create([
+        'title' => $request->title,
+        'is_completed' => false,
+    ]);
+
+    return redirect()->back();
+}
+
+    /**
+     * Tanda tugasan sebagai selesai/belum selesai
+     */
+    public function check($id)
+    {
+        $task = Auth::user()->tasks()->findOrFail($id);
+        $task->update([
+            'is_completed' => !$task->is_completed
+        ]);
+
+        return redirect()->back();
     }
 
-    // Padam Tugasan
-    public function destroy($id) {
-        // Cari task milik user yang login sahaja untuk keselamatan
-        $task = Task::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
-        $task->delete();
-        return redirect('/dashboard');
-    }
-
-    // Papar Halaman Edit
-    public function edit($id) {
-        // firstOrFail() akan keluar error 404 kalau task tu bukan milik user yang login
-        $task = Task::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+    /**
+     * Papar halaman edit
+     */
+    public function edit($id)
+    {
+        $task = Auth::user()->tasks()->findOrFail($id);
         return view('edit', compact('task'));
     }
 
-    // Simpan Perubahan Edit
-    public function update(Request $request, $id) {
-        $task = Task::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
-        $task->nama_tugasan = $request->task;
-        $task->save();
+    /**
+     * Simpan kemaskini tugasan
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
 
-        return redirect('/dashboard')->with('success', 'Tugasan dikemaskini!');
+        $task = Auth::user()->tasks()->findOrFail($id);
+        $task->update([
+            'title' => $request->title
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Tugasan dikemaskini!');
     }
 
-    // Tandakan Selesai/Belum Selesai
-    public function check($id) {
-        $task = Task::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
-        $task->is_done = !$task->is_done;
-        $task->save();
-        return redirect('/dashboard');
+    /**
+     * Padam tugasan
+     */
+    public function destroy($id)
+    {
+        $task = Auth::user()->tasks()->findOrFail($id);
+        $task->delete();
+
+        return redirect()->back()->with('success', 'Tugasan dipadam!');
     }
 }
